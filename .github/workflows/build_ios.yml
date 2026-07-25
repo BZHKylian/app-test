@@ -27,19 +27,24 @@ jobs:
       - name: Installation des dépendances Flutter
         run: flutter pub get
 
+      - name: S'assurer d'un nom de Bundle valide (sans tirets bas)
+        run: |
+          # Remplace les occurrences de app_test_mobile par apptestmobile dans la config iOS
+          LC_ALL=C find ios/ -type f -exec sed -i '' 's/app_test_mobile/apptestmobile/g' {} + || true
+
       - name: Compilation iOS
         run: flutter build ios --release --no-codesign
 
-      - name: Empaquetage manuel en .ipa pour SideStore
+      - name: Empaquetage manuel en .ipa pour SideStore / iLoader
         run: |
           mkdir -p Payload
           mv build/ios/iphoneos/Runner.app Payload/
           zip -r app-release.ipa Payload
           mkdir -p build/ios/ipa/
-          mv app-release.ipa build/ios/ipa/app-test.ipa
+          mv app-release.ipa build/ios/ipa/apptest.ipa
 
       - name: Upload de l'IPA dans les Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-test-ios
-          path: build/ios/ipa/app-test.ipa
+          path: build/ios/ipa/apptest.ipa
