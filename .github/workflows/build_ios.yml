@@ -1,0 +1,37 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Recupération du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Configuration de Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Installation des dépendances Flutter
+        run: flutter pub get
+
+      - name: Compilation de l'IPA (non signé pour SideStore)
+        run: flutter build ipa --release --no-codesign
+
+      - name: Upload de l'IPA dans les Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-test-ios
+          path: build/ios/ipa/*.ipa
