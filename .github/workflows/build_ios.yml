@@ -1,50 +1,66 @@
-name: Build iOS IPA
+name: Build Mobile Apps (Android & iOS)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  build:
     runs-on: macos-latest
 
     steps:
-      - name: Récupération du code
+      # 1. Récupération du code source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configuration de Java
+      # 2. Configuration de Java pour Android
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Configuration de Flutter
+      # 3. Configuration de Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
 
-      - name: Installation des dépendances Flutter
+      # 4. Installation des dépendances
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: S'assurer d'un nom de Bundle valide (sans tirets bas)
+      # 5. Build Android (APK)
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      # 6. Build iOS (Sans signature de code)
+      - name: Build iOS App (No Codesign)
         run: |
-          # Remplace les occurrences de app_test_mobile par apptestmobile dans la config iOS
-          LC_ALL=C find ios/ -type f -exec sed -i '' 's/app_test_mobile/apptestmobile/g' {} + || true
+          flutter build ios --release --no-codesign
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" -sdk iphoneos
 
-      - name: Compilation iOS
-        run: flutter build ios --release --no-codesign
-
-      - name: Empaquetage manuel en .ipa pour SideStore / iLoader
+      # 7. Emballage du dossier .app en fichier .ipa pour SideStore / AltStore
+      - name: Create IPA Package
         run: |
           mkdir -p Payload
-          mv build/ios/iphoneos/Runner.app Payload/
-          zip -r app-release.ipa Payload
-          mkdir -p build/ios/ipa/
-          mv app-release.ipa build/ios/ipa/apptest.ipa
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r FleetSync.ipa Payload
 
-      - name: Upload de l'IPA dans les Artifacts
+      # 8. Sauvegarde des fichiers générés en Artifacts GitHub
+      - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-test-ios
-          path: build/ios/ipa/apptest.ipa
+          name: app-release-android
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-ios
+          path: FleetSync.ipa
