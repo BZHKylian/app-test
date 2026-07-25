@@ -282,6 +282,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 /* ========================================================================= */
 /* DESSINATEUR SUR MESURE : COMPTEUR CIRCULAIRE (CustomPainter)              */
 /* ========================================================================= */
+/* ========================================================================= */
+/* DESSINATEUR SUR MESURE : COMPTEUR CIRCULAIRE (CustomPainter)              */
+/* ========================================================================= */
 class SpeedometerPainter extends CustomPainter {
   final double speed;
   final double maxGaugeSpeed;
@@ -293,9 +296,9 @@ class SpeedometerPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width, size.height) / 2 - 12;
 
-    // Arc de fond
+    // Arc de fond (Corrigé)
     final backgroundPaint = Paint()
-      :color = Colors.white10
+      ..color = Colors.white10
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10
       ..strokeCap = StrokeCap.round;
